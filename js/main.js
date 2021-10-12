@@ -1,16 +1,11 @@
 import '../scss/main.scss'
 
+const items = document.querySelector('ul')
 const itemList = document.querySelector('.items')
 const inputEl = document.querySelector('input')
 const addBtn = document.querySelector('.footer__button')
 const noItemUI = document.querySelector('.noItemUI')
-
-// 요소를 만들고 속성과 값을 추가해서 리턴하는 함수
-function makeNewElementWithClass(htmltag, value) {
-  const newElement = document.createElement(htmltag)
-  newElement.setAttribute('class', value)
-  return newElement
-}
+const form = document.querySelector('.new-form')
 
 function onAdd() {
   // 1. 인풋창에 내용을 입력한다
@@ -25,55 +20,56 @@ function onAdd() {
 }
 
 // 쇼핑리스트 아이템을 만들고 리턴하는 함수
+let id = 0
 function createItem(text) {
   // 각 요소들을 만듦
-  const itemRow = makeNewElementWithClass('li', 'item__row')
-  const item = makeNewElementWithClass('div', 'item')
-  const itemName = makeNewElementWithClass('span', 'item__name')
-  itemName.innerText = text
-  const icons = makeNewElementWithClass('div', 'item__icons')
-  const itemCheck = makeNewElementWithClass('button', 'icon item__check')
-  itemCheck.innerHTML = `<i class="fas fa-check"></i>`
-  const itemDelete = makeNewElementWithClass('button', 'icon item__delete')
-  itemDelete.innerHTML = `<i class="fas fa-trash-alt"></i>`
-  const divider = makeNewElementWithClass('div', 'item__divider')
-  // 요소들을 DOM Tree 에 맞게 추가해줌
-  itemRow.appendChild(item)
-  itemRow.appendChild(divider)
-  item.appendChild(itemName)
-  item.appendChild(icons)
-  icons.appendChild(itemCheck)
-  icons.appendChild(itemDelete)
-
-  // check 버튼을 누르면 텍스트에 라인 그어지기
-  itemCheck.addEventListener('click', () => {
-    itemName.classList.toggle('complete')
-    itemCheck.classList.toggle('complete')
-  })
-  // delete 버튼을 누르면 리스트 삭제
-  itemDelete.addEventListener('click', () => {
-    itemList.removeChild(itemRow)
-    // 아이템이 모두 지워지면 기본문구 나타내기
-    if (itemList.childElementCount > 1) return
-    if (itemList.childElementCount === 1) {
-      noItemUI.style.display = 'flex'
-    }
-  })
+  const itemRow = document.createElement('li')
+  itemRow.setAttribute('class', 'item__row')
+  itemRow.setAttribute('data-id', id)
+  itemRow.innerHTML = `
+    <div class="item">
+      <span class="item__name" data-checking-id=${id}>${text}</span>
+      <div class="item__icons">
+        <button class="icon item__check" data-checkBtn=${id}>
+          <i class="fas fa-check" area-hidden="true" data-check-id=${id}></i>
+        </button>
+        <button class="icon item__delete">
+          <i class="fas fa-trash-alt" aria-hidden="true" data-target-id=${id}></i>
+        </button>
+      </div>
+    </div>
+    <div class="item__divider"></div>
+  `
+  id++
   
   return itemRow
 }
 
-// + 버튼을 누르면 아이템 추가
-addBtn.addEventListener('click', () => {
-  if (inputEl.value === '') return
-  noItemUI.style.display = 'none'  // 아이템이 추가되면 기본문구 지우기
-  onAdd()
-})
-// Enter 키를 누르면 아이템 추가
-inputEl.addEventListener('keypress', (e) => {
-  if (e.key !== 'Enter') return
-  if (inputEl.value === '') return
-  noItemUI.style.display = 'none' // 아이템이 추가되면 기본문구 지우기
-  onAdd()
+items.addEventListener('click', (event) => {
+  // 휴지통 아이콘을 클릭하면 해당 아이템 지우기
+  const targetId = event.target.dataset.targetId
+  if (targetId) {
+    const toBeDeleted = document.querySelector(`.item__row[data-id="${targetId}"]`)
+    toBeDeleted.remove()
+  }
+  // 체크 아이콘을 누르면 해당 아이템 줄 긋기
+  const checkId = event.target.dataset.checkId
+  if (checkId) {
+    const toBeChecked = document.querySelector(`.item__name[data-checking-id="${checkId}"]`)
+    const checkBtn = document.querySelector(`.icon.item__check[data-checkBtn="${checkId}"]`)
+    toBeChecked.classList.toggle('complete')
+    checkBtn.classList.toggle('complete')
+  }
+  // 아이템이 모두 지워지면 기본문구 나타내기
+  if (itemList.childElementCount > 1) return
+  if (itemList.childElementCount === 1) {
+    noItemUI.style.display = 'flex'
+  }
 })
 
+form.addEventListener('submit', (e) => {
+  e.preventDefault()
+  if (inputEl.value === '') return
+  noItemUI.style.display = 'none' // 새 아이템이 추가되면 기본문구 지우기
+  onAdd()
+})
